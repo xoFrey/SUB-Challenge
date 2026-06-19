@@ -1,8 +1,11 @@
 import os
+import asyncio
 import discord
 from discord import app_commands
 from discord.ext import commands
 from . import storage
+
+DELETE_AFTER_SECONDS = 5
 
 ROLE_SUB_REKRUT_ID = int(os.environ["ROLE_SUB_REKRUT_ID"])
 ROLE_STERNENSAMMLER_ID = int(os.environ["ROLE_STERNENSAMMLER_ID"])
@@ -52,6 +55,7 @@ class AussortiertModal(discord.ui.Modal, title="Aussortierte Bücher"):
         await interaction.response.send_message(
             f"📦 {n} Buch/Bücher aussortiert: **+{n} ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐",
             ephemeral=True,
+            delete_after=DELETE_AFTER_SECONDS,
         )
 
 
@@ -142,6 +146,11 @@ class SubChecklistView(discord.ui.View):
                     ),
                     view=None,
                 )
+                await asyncio.sleep(DELETE_AFTER_SECONDS)
+                try:
+                    await interaction.delete_original_response()
+                except discord.HTTPException:
+                    pass
 
         return SubmitButton()
 
@@ -175,6 +184,11 @@ class BuchBeendetChoiceView(discord.ui.View):
             content=f"📚 BuchClub-Buch beendet: **+5 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐",
             view=None,
         )
+        await asyncio.sleep(DELETE_AFTER_SECONDS)
+        try:
+            await interaction.delete_original_response()
+        except discord.HTTPException:
+            pass
 
     @discord.ui.button(label="SuB Buch", style=discord.ButtonStyle.secondary)
     async def sub_buch(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -203,7 +217,7 @@ class MainPanelView(discord.ui.View):
         await storage.increment_stat(interaction.user.id, "dnf")
         await check_role_rewards(interaction.user, total)
         await interaction.response.send_message(
-            f"DNF: **+1 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐", ephemeral=True
+            f"DNF: **+1 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐", ephemeral=True, delete_after=DELETE_AFTER_SECONDS
         )
 
     @discord.ui.button(label="Pausiert", style=discord.ButtonStyle.secondary, custom_id="sub_panel:pausiert")
@@ -215,7 +229,7 @@ class MainPanelView(discord.ui.View):
         await storage.increment_stat(interaction.user.id, "pausiert")
         await check_role_rewards(interaction.user, total)
         await interaction.response.send_message(
-            f"Pausiert: **+0.5 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐", ephemeral=True
+            f"Pausiert: **+0.5 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐", ephemeral=True, delete_after=DELETE_AFTER_SECONDS
         )
 
     @discord.ui.button(label="Aussortiert", style=discord.ButtonStyle.secondary, custom_id="sub_panel:aussortiert")
@@ -233,7 +247,7 @@ class MainPanelView(discord.ui.View):
         monthly, total = await storage.add_stars(interaction.user.id, -1)
         await storage.increment_stat(interaction.user.id, "gekauft")
         await interaction.response.send_message(
-            f"Gekauft: **-1 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐", ephemeral=True
+            f"Gekauft: **-1 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐", ephemeral=True, delete_after=DELETE_AFTER_SECONDS
         )
 
     @discord.ui.button(label="Buch beendet", style=discord.ButtonStyle.success, custom_id="sub_panel:buch_beendet")
