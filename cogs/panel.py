@@ -58,9 +58,10 @@ class AussortiertModal(discord.ui.Modal, title="Aussortierte Bücher"):
 # ---------- SuB-Checkliste (View mit Auswahl-Buttons + Submit) ----------
 class SubChecklistView(discord.ui.View):
     def __init__(self, user_id: int):
-        super().__init__(timeout=180)
+        super().__init__(timeout=600)
         self.user_id = user_id
         self.selected = set()
+        self.message: discord.InteractionMessage | None = None
 
         options = [
             ("reihe_beendet", "Reihe beendet (+3)"),
@@ -73,6 +74,16 @@ class SubChecklistView(discord.ui.View):
             self.add_item(self._make_toggle_button(key, label))
 
         self.add_item(self._make_submit_button())
+
+    async def on_timeout(self):
+        if self.message:
+            try:
+                await self.message.edit(
+                    content="⏱️ Diese Auswahl ist abgelaufen. Klicke erneut auf **Buch beendet**, um es einzutragen.",
+                    view=None,
+                )
+            except discord.HTTPException:
+                pass
 
     def _make_toggle_button(self, key, label):
         view = self
@@ -138,8 +149,19 @@ class SubChecklistView(discord.ui.View):
 # ---------- BuchClub / SuB Auswahl ----------
 class BuchBeendetChoiceView(discord.ui.View):
     def __init__(self, user_id: int):
-        super().__init__(timeout=120)
+        super().__init__(timeout=600)
         self.user_id = user_id
+        self.message: discord.InteractionMessage | None = None
+
+    async def on_timeout(self):
+        if self.message:
+            try:
+                await self.message.edit(
+                    content="⏱️ Diese Auswahl ist abgelaufen. Klicke erneut auf **Buch beendet**, um es einzutragen.",
+                    view=None,
+                )
+            except discord.HTTPException:
+                pass
 
     @discord.ui.button(label="BuchClub Buch", style=discord.ButtonStyle.primary)
     async def buchclub(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -164,6 +186,7 @@ class BuchBeendetChoiceView(discord.ui.View):
             content="Wähle alle zutreffenden Punkte aus und klicke dann **Absenden**:",
             view=view,
         )
+        view.message = await interaction.original_response()
 
 
 # ---------- Hauptpanel ----------
@@ -222,6 +245,7 @@ class MainPanelView(discord.ui.View):
         await interaction.response.send_message(
             "War das ein BuchClub-Buch oder ein SuB-Buch?", view=view, ephemeral=True
         )
+        view.message = await interaction.original_response()
 
 
 class PanelCog(commands.Cog):
