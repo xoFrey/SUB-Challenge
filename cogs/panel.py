@@ -209,7 +209,7 @@ class MainPanelView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)  # persistent
 
-    @discord.ui.button(label="DNF", style=discord.ButtonStyle.success, custom_id="sub_panel:dnf")
+    @discord.ui.button(label="DNF", style=discord.ButtonStyle.secondary, custom_id="sub_panel:dnf")
     async def dnf(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not has_sub_rekrut(interaction.user):
             await interaction.response.send_message("Du brauchst die Rolle SUB-Rekrut.", ephemeral=True)
@@ -221,7 +221,7 @@ class MainPanelView(discord.ui.View):
             f"DNF: **+1 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐", ephemeral=True, delete_after=DELETE_AFTER_SECONDS
         )
 
-    @discord.ui.button(label="Pausiert", style=discord.ButtonStyle.success, custom_id="sub_panel:pausiert")
+    @discord.ui.button(label="Pausiert", style=discord.ButtonStyle.secondary, custom_id="sub_panel:pausiert")
     async def pausiert(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not has_sub_rekrut(interaction.user):
             await interaction.response.send_message("Du brauchst die Rolle SUB-Rekrut.", ephemeral=True)
@@ -233,7 +233,7 @@ class MainPanelView(discord.ui.View):
             f"Pausiert: **+0.5 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐", ephemeral=True, delete_after=DELETE_AFTER_SECONDS
         )
 
-    @discord.ui.button(label="Aussortiert", style=discord.ButtonStyle.success, custom_id="sub_panel:aussortiert")
+    @discord.ui.button(label="Aussortiert", style=discord.ButtonStyle.secondary, custom_id="sub_panel:aussortiert")
     async def aussortiert(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not has_sub_rekrut(interaction.user):
             await interaction.response.send_message("Du brauchst die Rolle SUB-Rekrut.", ephemeral=True)
@@ -278,9 +278,56 @@ class PanelCog(commands.Cog):
     async def panel_posten(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="⭐ SUB-Sterne-Challenge",
-            description="Wähle eine Aktion:",
+            description=(
+                "Jedes gelesene SUB-Buch bringt Sterne! Trage deine Aktivitäten über die Buttons "
+                "unten ein und sammle Sterne für dich und den Server. 📚"
+            ),
             color=discord.Color.gold(),
         )
+
+        embed.add_field(
+            name="📖 Buch beendet",
+            value=(
+                "**BuchClub-Buch:** pauschal **+5**\n"
+                "**SuB-Buch:** +1 Basis, plus wählbare Extras:\n"
+                "• Reihe beendet **+3**\n"
+                "• Über 500 Seiten / 15h Hörbuch **+2**\n"
+                "• Lag 2 Jahre auf dem SUB **+2**\n"
+                "• Buddy Read abgeschlossen **+1**\n"
+                "• Längstes Buch vom SUB **+1**"
+            ),
+            inline=False,
+        )
+
+        embed.add_field(
+            name="❌ DNF", value="**+1** ⭐ — Buch abgebrochen", inline=True
+        )
+        embed.add_field(
+            name="⏸️ Pausiert", value="**+0.5** ⭐ — Buch pausiert", inline=True
+        )
+        embed.add_field(
+            name="📦 Aussortiert", value="**+1** ⭐ pro Buch", inline=True
+        )
+
+        embed.add_field(
+            name="🛍️ Gekauft",
+            value=(
+                "**-1** ⭐ pro Buch\n"
+                "**Ausnahmen (kein Abzug):**\n"
+                "• SUB < 25 Bücher\n"
+                "• Laufende Vorbestellungen / Buchboxen\n"
+                "• Fortlaufende Reihen, die gerade aktiv gelesen werden\n"
+                "• BuchClub-Buch"
+            ),
+            inline=False,
+        )
+
+        embed.add_field(
+            name="\u200b",
+            value="Wähle unten eine Aktion oder schau mit **Sternenstand** nach deinem aktuellen Stand:",
+            inline=False,
+        )
+
         await interaction.response.send_message(embed=embed, view=MainPanelView())
 
 
