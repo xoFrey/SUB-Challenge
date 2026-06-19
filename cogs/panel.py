@@ -209,7 +209,7 @@ class MainPanelView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)  # persistent
 
-    @discord.ui.button(label="DNF", style=discord.ButtonStyle.secondary, custom_id="sub_panel:dnf")
+    @discord.ui.button(label="DNF", style=discord.ButtonStyle.success, custom_id="sub_panel:dnf")
     async def dnf(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not has_sub_rekrut(interaction.user):
             await interaction.response.send_message("Du brauchst die Rolle SUB-Rekrut.", ephemeral=True)
@@ -221,7 +221,7 @@ class MainPanelView(discord.ui.View):
             f"DNF: **+1 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐", ephemeral=True, delete_after=DELETE_AFTER_SECONDS
         )
 
-    @discord.ui.button(label="Pausiert", style=discord.ButtonStyle.secondary, custom_id="sub_panel:pausiert")
+    @discord.ui.button(label="Pausiert", style=discord.ButtonStyle.success, custom_id="sub_panel:pausiert")
     async def pausiert(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not has_sub_rekrut(interaction.user):
             await interaction.response.send_message("Du brauchst die Rolle SUB-Rekrut.", ephemeral=True)
@@ -233,7 +233,7 @@ class MainPanelView(discord.ui.View):
             f"Pausiert: **+0.5 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐", ephemeral=True, delete_after=DELETE_AFTER_SECONDS
         )
 
-    @discord.ui.button(label="Aussortiert", style=discord.ButtonStyle.secondary, custom_id="sub_panel:aussortiert")
+    @discord.ui.button(label="Aussortiert", style=discord.ButtonStyle.success, custom_id="sub_panel:aussortiert")
     async def aussortiert(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not has_sub_rekrut(interaction.user):
             await interaction.response.send_message("Du brauchst die Rolle SUB-Rekrut.", ephemeral=True)
