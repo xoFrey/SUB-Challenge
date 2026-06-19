@@ -40,6 +40,7 @@ async def load_extensions():
     await bot.load_extension("cogs.stars")
     await bot.load_extension("cogs.panel")
     await bot.load_extension("cogs.monthly")
+    await bot.load_extension("cogs.join")
 
 
 # ---------- Mini-Webserver, damit UptimeRobot den Bot wachhalten kann ----------
