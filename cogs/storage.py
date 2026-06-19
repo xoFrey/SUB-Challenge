@@ -104,6 +104,23 @@ async def set_sub_size(user_id: int, size: int):
         await conn.execute("UPDATE users SET sub_size = $2 WHERE user_id = $1", user_id, size)
 
 
+async def adjust_sub_size(user_id: int, delta: int):
+    """SUB-Größe um delta verändern (kann negativ sein), aber nie unter 0 fallen."""
+    async with _pool.acquire() as conn:
+        await _ensure_user(conn, user_id)
+        row = await conn.fetchrow(
+            """
+            UPDATE users
+            SET sub_size = GREATEST(sub_size + $2, 0)
+            WHERE user_id = $1
+            RETURNING sub_size
+            """,
+            user_id,
+            delta,
+        )
+        return row["sub_size"]
+
+
 async def get_all_users():
     """Gibt dict {user_id_str: {...}} zurück, im gleichen Format wie get_user."""
     async with _pool.acquire() as conn:

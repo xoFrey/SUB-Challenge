@@ -13,6 +13,7 @@ async def build_sternenstand_embed(user_id: int) -> discord.Embed:
     )
     embed.add_field(name="Diesen Monat", value=f"{user['monthly_stars']} ⭐", inline=True)
     embed.add_field(name="Gesamt", value=f"{user['total_stars']} ⭐", inline=True)
+    embed.add_field(name="📚 Dein SUB", value=str(user["sub_size"]), inline=True)
     embed.add_field(name="\u200b", value="\u200b", inline=False)  # Leerzeile
 
     gelesen = stats["buchclub_beendet"] + stats["sub_beendet"]

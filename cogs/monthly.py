@@ -4,8 +4,11 @@ from discord import app_commands
 from discord.ext import commands, tasks
 from datetime import datetime, timezone
 from . import storage
+from .panel import announce_role_change
 
 PANEL_CHANNEL_ID = int(os.environ["PANEL_CHANNEL_ID"])
+ROLE_STERNENSAMMLER_ID = int(os.environ["ROLE_STERNENSAMMLER_ID"])
+ROLE_BUECHERKRIEGER_ID = int(os.environ["ROLE_BUECHERKRIEGER_ID"])
 ROLE_SUB_KOENIGIN_ID = int(os.environ["ROLE_SUB_KOENIGIN_ID"])
 ROLE_BOOK_BUYING_GOBLIN_ID = int(os.environ["ROLE_BOOK_BUYING_GOBLIN_ID"])
 ROLE_SUB_DRACHE_ID = int(os.environ["ROLE_SUB_DRACHE_ID"])
@@ -13,6 +16,8 @@ ROLE_SPEED_READER_ID = int(os.environ["ROLE_SPEED_READER_ID"])
 ROLE_DNF_EXPERTIN_ID = int(os.environ["ROLE_DNF_EXPERTIN_ID"])
 
 MONTHLY_SPECIAL_ROLE_IDS = [
+    ROLE_STERNENSAMMLER_ID,
+    ROLE_BUECHERKRIEGER_ID,
     ROLE_SUB_KOENIGIN_ID,
     ROLE_BOOK_BUYING_GOBLIN_ID,
     ROLE_SUB_DRACHE_ID,
@@ -90,6 +95,7 @@ class MonthlyCog(commands.Cog):
                 continue
             for member in list(role.members):
                 await member.remove_roles(role, reason="Monatswechsel")
+                await announce_role_change(member, role, gained=False)
 
         if not users:
             return
@@ -131,6 +137,7 @@ class MonthlyCog(commands.Cog):
         role = guild.get_role(role_id)
         if member and role:
             await member.add_roles(role, reason="Monatliche Sonderrolle")
+            await announce_role_change(member, role, gained=True)
 
     @app_commands.command(name="monat-jetzt-beenden", description="Erzwingt Monatsabschluss sofort (Admin, zum Testen)")
     @app_commands.checks.has_permissions(administrator=True)

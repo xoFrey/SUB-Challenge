@@ -8,26 +8,53 @@ from .stars import build_sternenstand_embed
 
 DELETE_AFTER_SECONDS = 5
 
+PANEL_CHANNEL_ID = int(os.environ["PANEL_CHANNEL_ID"])
 ROLE_SUB_REKRUT_ID = int(os.environ["ROLE_SUB_REKRUT_ID"])
 ROLE_STERNENSAMMLER_ID = int(os.environ["ROLE_STERNENSAMMLER_ID"])
 ROLE_BUECHERKRIEGER_ID = int(os.environ["ROLE_BUECHERKRIEGER_ID"])
 ROLE_SUB_BEZWINGER_ID = int(os.environ["ROLE_SUB_BEZWINGER_ID"])
 
-ROLE_THRESHOLDS = [
-    (70, ROLE_SUB_BEZWINGER_ID),
+MONTHLY_THRESHOLDS = [
     (30, ROLE_BUECHERKRIEGER_ID),
     (10, ROLE_STERNENSAMMLER_ID),
 ]
+TOTAL_THRESHOLDS = [
+    (150, ROLE_SUB_BEZWINGER_ID),
+]
 
 
-async def check_role_rewards(member: discord.Member, total_stars: float):
-    """Vergibt automatisch Rollen basierend auf dem Gesamtsternestand."""
-    for threshold, role_id in ROLE_THRESHOLDS:
+async def announce_role_change(member: discord.Member, role: discord.Role, gained: bool):
+    """Postet eine kurze Nachricht im Panel-Channel, wenn jemand eine Rolle bekommt/verliert."""
+    channel = member.guild.get_channel(PANEL_CHANNEL_ID)
+    if channel is None:
+        return
+    if gained:
+        text = f"🎉 {member.mention} hat die Rolle **{role.name}** erhalten!"
+    else:
+        text = f"📉 {member.mention} hat die Rolle **{role.name}** verloren."
+    try:
+        await channel.send(text)
+    except discord.HTTPException:
+        pass
+
+
+async def check_role_rewards(member: discord.Member, monthly_stars: float, total_stars: float):
+    """Vergibt automatisch Rollen: Sternensammler/Bücherkrieger nach Monats-Sternen, SUB-Bezwinger nach Gesamt-Sternen."""
+    for threshold, role_id in MONTHLY_THRESHOLDS:
+        role = member.guild.get_role(role_id)
+        if role is None:
+            continue
+        if monthly_stars >= threshold and role not in member.roles:
+            await member.add_roles(role, reason=f"{threshold} Monats-Sterne erreicht")
+            await announce_role_change(member, role, gained=True)
+
+    for threshold, role_id in TOTAL_THRESHOLDS:
         role = member.guild.get_role(role_id)
         if role is None:
             continue
         if total_stars >= threshold and role not in member.roles:
-            await member.add_roles(role, reason=f"{threshold} Sterne erreicht")
+            await member.add_roles(role, reason=f"{threshold} Gesamt-Sterne erreicht")
+            await announce_role_change(member, role, gained=True)
 
 
 def has_sub_rekrut(member: discord.Member) -> bool:
@@ -52,7 +79,7 @@ class AussortiertModal(discord.ui.Modal, title="Aussortierte Bücher"):
             await interaction.response.send_message("Bitte eine gültige positive Zahl eingeben.", ephemeral=True)
             return
         monthly, total = await storage.add_stars(interaction.user.id, n)
-        await check_role_rewards(interaction.user, total)
+        await check_role_rewards(interaction.user, monthly, total)
         await interaction.response.send_message(
             f"📦 {n} Buch/Bücher aussortiert: **+{n} ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐",
             ephemeral=True,
@@ -136,14 +163,16 @@ class SubChecklistView(discord.ui.View):
 
                 monthly, total = await storage.add_stars(interaction.user.id, total_gain)
                 await storage.increment_stat(interaction.user.id, "sub_beendet")
-                await check_role_rewards(interaction.user, total)
+                new_sub_size = await storage.adjust_sub_size(interaction.user.id, -1)
+                await check_role_rewards(interaction.user, monthly, total)
 
                 gewaehlt = ", ".join(view.selected) if view.selected else "keine Extras"
                 await interaction.response.edit_message(
                     content=(
                         f"📚 Buch beendet (SuB)! Basis +1, Extras: {gewaehlt}\n"
                         f"**Gesamt für diesen Eintrag: +{total_gain} ⭐**\n"
-                        f"Monat: {monthly} ⭐ | Gesamt: {total} ⭐"
+                        f"Monat: {monthly} ⭐ | Gesamt: {total} ⭐\n"
+                        f"Dein SUB: {new_sub_size} 📚"
                     ),
                     view=None,
                 )
@@ -180,7 +209,7 @@ class BuchBeendetChoiceView(discord.ui.View):
             return
         monthly, total = await storage.add_stars(interaction.user.id, 5)
         await storage.increment_stat(interaction.user.id, "buchclub_beendet")
-        await check_role_rewards(interaction.user, total)
+        await check_role_rewards(interaction.user, monthly, total)
         await interaction.response.edit_message(
             content=f"📚 BuchClub-Buch beendet: **+5 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐",
             view=None,
@@ -209,14 +238,14 @@ class MainPanelView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)  # persistent
 
-    @discord.ui.button(label="DNF", style=discord.ButtonStyle.secondary, custom_id="sub_panel:dnf")
+    @discord.ui.button(label="DNF", style=discord.ButtonStyle.danger, custom_id="sub_panel:dnf")
     async def dnf(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not has_sub_rekrut(interaction.user):
             await interaction.response.send_message("Du brauchst die Rolle SUB-Rekrut.", ephemeral=True)
             return
         monthly, total = await storage.add_stars(interaction.user.id, 1)
         await storage.increment_stat(interaction.user.id, "dnf")
-        await check_role_rewards(interaction.user, total)
+        await check_role_rewards(interaction.user, monthly, total)
         await interaction.response.send_message(
             f"DNF: **+1 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐", ephemeral=True, delete_after=DELETE_AFTER_SECONDS
         )
@@ -228,7 +257,7 @@ class MainPanelView(discord.ui.View):
             return
         monthly, total = await storage.add_stars(interaction.user.id, 0.5)
         await storage.increment_stat(interaction.user.id, "pausiert")
-        await check_role_rewards(interaction.user, total)
+        await check_role_rewards(interaction.user, monthly, total)
         await interaction.response.send_message(
             f"Pausiert: **+0.5 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐", ephemeral=True, delete_after=DELETE_AFTER_SECONDS
         )
@@ -240,15 +269,18 @@ class MainPanelView(discord.ui.View):
             return
         await interaction.response.send_modal(AussortiertModal())
 
-    @discord.ui.button(label="Gekauft", style=discord.ButtonStyle.danger, custom_id="sub_panel:gekauft")
+    @discord.ui.button(label="Gekauft", style=discord.ButtonStyle.secondary, custom_id="sub_panel:gekauft")
     async def gekauft(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not has_sub_rekrut(interaction.user):
             await interaction.response.send_message("Du brauchst die Rolle SUB-Rekrut.", ephemeral=True)
             return
         monthly, total = await storage.add_stars(interaction.user.id, -1)
         await storage.increment_stat(interaction.user.id, "gekauft")
+        new_sub_size = await storage.adjust_sub_size(interaction.user.id, 1)
         await interaction.response.send_message(
-            f"Gekauft: **-1 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐", ephemeral=True, delete_after=DELETE_AFTER_SECONDS
+            f"Gekauft: **-1 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐\nDein SUB: {new_sub_size} 📚",
+            ephemeral=True,
+            delete_after=DELETE_AFTER_SECONDS,
         )
 
     @discord.ui.button(label="Buch beendet", style=discord.ButtonStyle.success, custom_id="sub_panel:buch_beendet")
@@ -288,6 +320,7 @@ class PanelCog(commands.Cog):
         embed.add_field(
             name="📖 Buch beendet",
             value=(
+                "**+1** Basis\n"
                 "**BuchClub-Buch:** pauschal **+5**\n"
                 "**SuB-Buch:** +1 Basis, plus wählbare Extras:\n"
                 "• Reihe beendet **+3**\n"
@@ -315,7 +348,7 @@ class PanelCog(commands.Cog):
                 "**-1** ⭐ pro Buch\n"
                 "**Ausnahmen (kein Abzug):**\n"
                 "• SUB < 25 Bücher\n"
-                "• Laufende Vorbestellungen / Buchboxen\n"
+                "• Aktuelle Vorbestellungen\n"
                 "• Fortlaufende Reihen, die gerade aktiv gelesen werden\n"
                 "• BuchClub-Buch"
             ),
