@@ -209,7 +209,7 @@ class MainPanelView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)  # persistent
 
-    @discord.ui.button(label="DNF", style=discord.ButtonStyle.danger, custom_id="sub_panel:dnf")
+    @discord.ui.button(label="DNF", style=discord.ButtonStyle.primary, custom_id="sub_panel:dnf")
     async def dnf(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not has_sub_rekrut(interaction.user):
             await interaction.response.send_message("Du brauchst die Rolle SUB-Rekrut.", ephemeral=True)
@@ -240,7 +240,7 @@ class MainPanelView(discord.ui.View):
             return
         await interaction.response.send_modal(AussortiertModal())
 
-    @discord.ui.button(label="Gekauft", style=discord.ButtonStyle.primary, custom_id="sub_panel:gekauft")
+    @discord.ui.button(label="Gekauft", style=discord.ButtonStyle.danger, custom_id="sub_panel:gekauft")
     async def gekauft(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not has_sub_rekrut(interaction.user):
             await interaction.response.send_message("Du brauchst die Rolle SUB-Rekrut.", ephemeral=True)
@@ -262,7 +262,7 @@ class MainPanelView(discord.ui.View):
         )
         view.message = await interaction.original_response()
 
-    @discord.ui.button(label="Sternenstand", style=discord.ButtonStyle.secondary, custom_id="sub_panel:sternenstand")
+    @discord.ui.button(label="Sternenstand", style=discord.ButtonStyle.primary, custom_id="sub_panel:sternenstand")
     async def sternenstand(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = await build_sternenstand_embed(interaction.user.id)
         await interaction.response.send_message(embed=embed, ephemeral=True)
