@@ -87,6 +87,31 @@ class AussortiertModal(discord.ui.Modal, title="Aussortierte Bücher"):
         )
 
 
+# ---------- Modal für "SUB-Größe eintragen" ----------
+class SubGroesseModal(discord.ui.Modal, title="SUB-Größe eintragen"):
+    anzahl = discord.ui.TextInput(
+        label="Wie viele Bücher sind aktuell auf deinem SUB?",
+        placeholder="z.B. 42",
+        required=True,
+        max_length=4,
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            n = int(self.anzahl.value)
+            if n < 0:
+                raise ValueError
+        except ValueError:
+            await interaction.response.send_message("Bitte eine gültige positive Zahl eingeben.", ephemeral=True)
+            return
+        await storage.set_sub_size(interaction.user.id, n)
+        await interaction.response.send_message(
+            f"Dein SUB-Stand wurde auf **{n}** Bücher gesetzt. 📚",
+            ephemeral=True,
+            delete_after=DELETE_AFTER_SECONDS,
+        )
+
+
 # ---------- SuB-Checkliste (View mit Auswahl-Buttons + Submit) ----------
 class SubChecklistView(discord.ui.View):
     def __init__(self, user_id: int):
@@ -298,6 +323,13 @@ class MainPanelView(discord.ui.View):
     async def sternenstand(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = await build_sternenstand_embed(interaction.user.id)
         await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @discord.ui.button(label="SUB-Größe eintragen", style=discord.ButtonStyle.secondary, custom_id="sub_panel:sub_groesse")
+    async def sub_groesse(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not has_sub_rekrut(interaction.user):
+            await interaction.response.send_message("Du brauchst die Rolle SUB-Rekrut.", ephemeral=True)
+            return
+        await interaction.response.send_modal(SubGroesseModal())
 
 
 class PanelCog(commands.Cog):

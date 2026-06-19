@@ -35,20 +35,10 @@ class StarsCog(commands.Cog):
         embed = await build_sternenstand_embed(interaction.user.id)
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    @app_commands.command(name="sub-groesse", description="Trage die aktuelle Größe deines SUB ein")
-    @app_commands.describe(anzahl="Anzahl Bücher aktuell auf deinem SUB")
-    async def sub_groesse(self, interaction: discord.Interaction, anzahl: int):
-        if anzahl < 0:
-            await interaction.response.send_message("Die Zahl darf nicht negativ sein.", ephemeral=True)
-            return
-        await storage.set_sub_size(interaction.user.id, anzahl)
-        await interaction.response.send_message(f"Dein SUB-Stand wurde auf **{anzahl}** Bücher gesetzt.", ephemeral=True)
-
 
 async def setup(bot: commands.Bot):
     cog = StarsCog(bot)
     await bot.add_cog(cog)
     import os
     guild = discord.Object(id=int(os.environ["GUILD_ID"]))
-    for cmd in [cog.sternenstand, cog.sub_groesse]:
-        bot.tree.add_command(cmd, guild=guild)
+    bot.tree.add_command(cog.sternenstand, guild=guild)
