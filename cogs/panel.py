@@ -4,6 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from . import storage
+from .stars import build_sternenstand_embed
 
 DELETE_AFTER_SECONDS = 5
 
@@ -220,7 +221,7 @@ class MainPanelView(discord.ui.View):
             f"DNF: **+1 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐", ephemeral=True, delete_after=DELETE_AFTER_SECONDS
         )
 
-    @discord.ui.button(label="Pausiert", style=discord.ButtonStyle.secondary, custom_id="sub_panel:pausiert")
+    @discord.ui.button(label="Pausiert", style=discord.ButtonStyle.primary, custom_id="sub_panel:pausiert")
     async def pausiert(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not has_sub_rekrut(interaction.user):
             await interaction.response.send_message("Du brauchst die Rolle SUB-Rekrut.", ephemeral=True)
@@ -232,14 +233,14 @@ class MainPanelView(discord.ui.View):
             f"Pausiert: **+0.5 ⭐**\nMonat: {monthly} ⭐ | Gesamt: {total} ⭐", ephemeral=True, delete_after=DELETE_AFTER_SECONDS
         )
 
-    @discord.ui.button(label="Aussortiert", style=discord.ButtonStyle.secondary, custom_id="sub_panel:aussortiert")
+    @discord.ui.button(label="Aussortiert", style=discord.ButtonStyle.primary, custom_id="sub_panel:aussortiert")
     async def aussortiert(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not has_sub_rekrut(interaction.user):
             await interaction.response.send_message("Du brauchst die Rolle SUB-Rekrut.", ephemeral=True)
             return
         await interaction.response.send_modal(AussortiertModal())
 
-    @discord.ui.button(label="Gekauft", style=discord.ButtonStyle.secondary, custom_id="sub_panel:gekauft")
+    @discord.ui.button(label="Gekauft", style=discord.ButtonStyle.primary, custom_id="sub_panel:gekauft")
     async def gekauft(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not has_sub_rekrut(interaction.user):
             await interaction.response.send_message("Du brauchst die Rolle SUB-Rekrut.", ephemeral=True)
@@ -260,6 +261,11 @@ class MainPanelView(discord.ui.View):
             "War das ein BuchClub-Buch oder ein SuB-Buch?", view=view, ephemeral=True
         )
         view.message = await interaction.original_response()
+
+    @discord.ui.button(label="Sternenstand", style=discord.ButtonStyle.secondary, custom_id="sub_panel:sternenstand")
+    async def sternenstand(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = await build_sternenstand_embed(interaction.user.id)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 class PanelCog(commands.Cog):

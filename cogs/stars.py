@@ -3,7 +3,26 @@ from discord import app_commands
 from discord.ext import commands
 from . import storage
 
-GUILD_ID = None  # wird beim Laden gesetzt
+
+async def build_sternenstand_embed(user_id: int) -> discord.Embed:
+    user = await storage.get_user(user_id)
+    stats = user["month_stats"]
+    embed = discord.Embed(
+        title="⭐ Dein Sternenstand",
+        color=discord.Color.gold(),
+    )
+    embed.add_field(name="Diesen Monat", value=f"{user['monthly_stars']} ⭐", inline=True)
+    embed.add_field(name="Gesamt", value=f"{user['total_stars']} ⭐", inline=True)
+    embed.add_field(name="\u200b", value="\u200b", inline=False)  # Leerzeile
+
+    gelesen = stats["buchclub_beendet"] + stats["sub_beendet"]
+    embed.add_field(name="📚 Bücher beendet (Monat)", value=str(gelesen), inline=True)
+    embed.add_field(name="　 davon BuchClub", value=str(stats["buchclub_beendet"]), inline=True)
+    embed.add_field(name="　 davon SuB", value=str(stats["sub_beendet"]), inline=True)
+    embed.add_field(name="❌ DNF (Monat)", value=str(stats["dnf"]), inline=True)
+    embed.add_field(name="⏸️ Pausiert (Monat)", value=str(stats["pausiert"]), inline=True)
+    embed.add_field(name="🛍️ Gekauft (Monat)", value=str(stats["gekauft"]), inline=True)
+    return embed
 
 
 class StarsCog(commands.Cog):
@@ -12,24 +31,7 @@ class StarsCog(commands.Cog):
 
     @app_commands.command(name="sternenstand", description="Zeigt deinen Monats- und Gesamt-Sternenstand")
     async def sternenstand(self, interaction: discord.Interaction):
-        user = await storage.get_user(interaction.user.id)
-        stats = user["month_stats"]
-        embed = discord.Embed(
-            title="⭐ Dein Sternenstand",
-            color=discord.Color.gold(),
-        )
-        embed.add_field(name="Diesen Monat", value=f"{user['monthly_stars']} ⭐", inline=True)
-        embed.add_field(name="Gesamt", value=f"{user['total_stars']} ⭐", inline=True)
-        embed.add_field(name="\u200b", value="\u200b", inline=False)  # Leerzeile
-
-        gelesen = stats["buchclub_beendet"] + stats["sub_beendet"]
-        embed.add_field(name="📚 Bücher beendet (Monat)", value=str(gelesen), inline=True)
-        embed.add_field(name="　 davon BuchClub", value=str(stats["buchclub_beendet"]), inline=True)
-        embed.add_field(name="　 davon SuB", value=str(stats["sub_beendet"]), inline=True)
-        embed.add_field(name="❌ DNF (Monat)", value=str(stats["dnf"]), inline=True)
-        embed.add_field(name="⏸️ Pausiert (Monat)", value=str(stats["pausiert"]), inline=True)
-        embed.add_field(name="🛍️ Gekauft (Monat)", value=str(stats["gekauft"]), inline=True)
-
+        embed = await build_sternenstand_embed(interaction.user.id)
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @app_commands.command(name="sub-groesse", description="Trage die aktuelle Größe deines SUB ein")
