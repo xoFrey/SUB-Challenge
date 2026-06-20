@@ -324,7 +324,7 @@ class MainPanelView(discord.ui.View):
         embed = await build_sternenstand_embed(interaction.user.id)
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    @discord.ui.button(label="SUB-Größe eintragen", style=discord.ButtonStyle.secondary, custom_id="sub_panel:sub_groesse")
+    @discord.ui.button(label="SUB-Größe eintragen", style=discord.ButtonStyle.primary, custom_id="sub_panel:sub_groesse")
     async def sub_groesse(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not has_sub_rekrut(interaction.user):
             await interaction.response.send_message("Du brauchst die Rolle SUB-Rekrut.", ephemeral=True)

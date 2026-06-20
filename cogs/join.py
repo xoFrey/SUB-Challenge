@@ -11,7 +11,7 @@ class JoinView(discord.ui.View):
         super().__init__(timeout=None)  # persistent
 
     @discord.ui.button(
-        label="Ich mache mit!",
+        label="Beitreten!",
         style=discord.ButtonStyle.success,
         emoji="📚",
         custom_id="sub_panel:join_toggle",
