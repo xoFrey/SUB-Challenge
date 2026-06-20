@@ -263,7 +263,7 @@ class MainPanelView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)  # persistent
 
-    @discord.ui.button(label="DNF", style=discord.ButtonStyle.danger, custom_id="sub_panel:dnf")
+    @discord.ui.button(label="DNF", style=discord.ButtonStyle.secondary, custom_id="sub_panel:dnf")
     async def dnf(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not has_sub_rekrut(interaction.user):
             await interaction.response.send_message("Du brauchst die Rolle SUB-Rekrut.", ephemeral=True)
@@ -294,7 +294,7 @@ class MainPanelView(discord.ui.View):
             return
         await interaction.response.send_modal(AussortiertModal())
 
-    @discord.ui.button(label="Gekauft", style=discord.ButtonStyle.secondary, custom_id="sub_panel:gekauft")
+    @discord.ui.button(label="Gekauft", style=discord.ButtonStyle.danger, custom_id="sub_panel:gekauft")
     async def gekauft(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not has_sub_rekrut(interaction.user):
             await interaction.response.send_message("Du brauchst die Rolle SUB-Rekrut.", ephemeral=True)
