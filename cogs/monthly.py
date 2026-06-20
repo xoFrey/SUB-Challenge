@@ -140,7 +140,7 @@ class MonthlyCog(commands.Cog):
             await announce_role_change(member, role, gained=True)
 
     @app_commands.command(name="monat-jetzt-beenden", description="Erzwingt Monatsabschluss sofort (Admin, zum Testen)")
-    @app_commands.checks.has_permissions(administrator=True)
+    @app_commands.checks.has_permissions(manage_roles=True)
     async def monat_jetzt_beenden(self, interaction: discord.Interaction):
         await interaction.response.send_message("Monatsabschluss wird ausgeführt...", ephemeral=True)
         await self.run_month_end()

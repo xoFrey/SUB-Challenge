@@ -48,7 +48,7 @@ class JoinCog(commands.Cog):
         name="beitritt-posten",
         description="Postet den Beitritts-Button für die SUB-Rekrut-Rolle (Admin)",
     )
-    @app_commands.checks.has_permissions(administrator=True)
+    @app_commands.checks.has_permissions(manage_roles=True)
     async def beitritt_posten(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="📚 Bei der SUB-Sterne-Challenge mitmachen",

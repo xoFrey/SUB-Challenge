@@ -25,6 +25,25 @@ intents.members = True  # nötig um Rollen zu vergeben
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 
+@bot.tree.error
+async def on_app_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
+    if isinstance(error, discord.app_commands.MissingPermissions):
+        msg = "Dafür fehlt dir die nötige Berechtigung (Rollen verwalten)."
+    elif isinstance(error, discord.app_commands.CheckFailure):
+        msg = "Du darfst diesen Befehl nicht ausführen."
+    else:
+        msg = "Da ist leider etwas schiefgelaufen. Bitte nochmal versuchen."
+        print(f"Unerwarteter App-Command-Fehler: {error}")
+
+    try:
+        if interaction.response.is_done():
+            await interaction.followup.send(msg, ephemeral=True)
+        else:
+            await interaction.response.send_message(msg, ephemeral=True)
+    except discord.HTTPException:
+        pass
+
+
 @bot.event
 async def on_ready():
     print(f"Eingeloggt als {bot.user} (ID: {bot.user.id})")
